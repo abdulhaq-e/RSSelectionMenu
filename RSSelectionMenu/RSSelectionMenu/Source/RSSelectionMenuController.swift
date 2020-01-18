@@ -49,6 +49,10 @@ open class RSSelectionMenu<T>: UIViewController, UIPopoverPresentationController
     /// property name or unique key is required when using custom models array or dictionary array as datasource
     public var uniquePropertyName: String?
     
+    //
+    public var overrideShowRightButton: Bool = false
+    public var overrideShowLeftButton: Bool = false
+    
     /// Barbuttons titles
     public var leftBarButtonTitle: String?
     public var rightBarButtonTitle: String?
@@ -77,6 +81,8 @@ open class RSSelectionMenu<T>: UIViewController, UIPopoverPresentationController
     /// Note: This is override the default dismiss behaviour of the menu.
     /// onDismiss will not be called if this is implemeted. (dismiss manually in this completion block)
     public var onRightBarButtonTapped:((_ selectedItems: DataSource<T>) -> ())?
+    
+    public var dismissCompletionHandler: (() -> ())? = nil
     
     // MARK: - Private
     
@@ -325,10 +331,12 @@ extension RSSelectionMenu {
             case .push?:
                 self?.navigationController?.popViewController(animated: animated!)
             case .present?, .popover?, .formSheet?, .alert?, .actionSheet?, .bottomSheet?:
-               self?.dismiss(animated: animated!, completion: nil)
+                self?.dismiss(animated: animated!, completion: nil)
             case .none:
                 break
             }
+            
+            self?.dismissCompletionHandler?()
         }
     }
 }
@@ -338,6 +346,11 @@ extension RSSelectionMenu {
 
     // check if show rightBarButton
     fileprivate func showRightBarButton() -> Bool {
+        
+        if self.overrideShowRightButton {
+            return true
+        }
+        
         switch menuPresentationStyle {
         case .present, .push:
             return (tableView?.selectionStyle == .multiple || !self.dismissAutomatically)
@@ -348,6 +361,11 @@ extension RSSelectionMenu {
     
     // check if show leftBarButton
     fileprivate func showLeftBarButton() -> Bool {
+        
+        if self.overrideShowLeftButton {
+            return true
+        }
+        
         if case .present = menuPresentationStyle {
             return tableView?.selectionStyle == .single && self.dismissAutomatically
         }
